@@ -16,54 +16,50 @@ import SwiftUI
 struct ContentView: View {
     @State var habit: Habit = Habit()
     
-    @State var habits: [Habit] = []
+    @ObservedObject var habitTracker: HabitTracker = HabitTracker()
     
     var body: some View {
         NavigationStack {
+            
             VStack {
                 // display list of habits
                 ScrollView (.vertical) {
-                    ForEach(Array(habits.enumerated()), id: \.offset) {index, h in
-//                        HStack {
-//                            Text(h.type.rawValue)
-//                            Text(h.title)
-//                            Spacer()
-//                            Text(h.frequency.rawValue)
-//                                .italic()
-//                        }
-//                        
-//                        .padding()
-//                        
-////                        .overlay(
-////                            RoundedRectangle(cornerRadius: 25)
-////                            .strokeBorder(h.completed ? Color.green : Color.red)
-////                            .fill(Color.clear)
-////
-////                        )
-////                        .background(h.completed ? Color.green : Color.red)
-////                        .ignoresSafeArea()
-//                        .onTapGesture {
-//                            habits[index].completed.toggle()
-//                        }
-                        
+                    ForEach(Array(habitTracker.habits.enumerated()), id: \.offset) {index, h in
                         Button(action: {
-                            habits[index].completed.toggle()
-                        }) {
-                            HStack {
-                                Text(h.type.rawValue)
-                                Text(h.title)
-                                Spacer()
-                                Text(h.frequency.rawValue)
-                                    .italic()
+                            habitTracker.habits[index].completed.toggle()
+                            if (habitTracker.habits[index].completed) {
+                                habitTracker.habits[index].increaseTally()
+                            } else {
+                                habitTracker.habits[index].decreaseTally()
                             }
                             
-                            .padding()
-                            
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 25)
-                                .strokeBorder(h.completed ? Color.green : Color.red)
-                            )
+//                            habits[index].
+                        }) {
+                            ZStack {
+                                HStack {
+                                    Text(h.type.rawValue)
+                                    Text(h.title)
+                                    Spacer()
+                                    Text(h.frequency.rawValue)
+                                        .italic()
+                                    Text("Completed percent: \(Double(h.tally) / Double(h.goal))")
+                                }
+                                .contentShape(Rectangle())
+                                .padding()
+                                
+                                .background(alignment: .leading) {
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .trim(from: 0.5 - (Double(h.tally) / Double(h.goal)) / 2, to: 0.5 + (Double(h.tally) / Double(h.goal)) / 2)
+                                        .fill(h.completed ? Color.green : Color.red)
+                                        .opacity(0.5)
 
+                                }
+                                
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .strokeBorder(h.completed ? Color.green : Color.red)
+                                )
+                            }
                         }
                         .buttonStyle(.plain)
                     }
@@ -86,14 +82,14 @@ struct ContentView: View {
                     }
                 }
                 Button(action: {
-                    habits.append(habit)
+                    habitTracker.addHabit(h: habit)
                 }) {
                         Text("Add Habit")
                 }
             }
             
             .navigationTitle("Habits")
-            .padding()
+            .padding([.bottom, .leading, .trailing])
         }
     }
 }
